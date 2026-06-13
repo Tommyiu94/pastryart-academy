@@ -218,8 +218,10 @@ function PastryCard({
     setUploading(false);
 
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || "Failed to upload lesson");
+      const data = await res.json().catch(() => null);
+      setError(
+        data?.error || `Failed to upload lesson (${res.status} ${res.statusText})`
+      );
       return;
     }
 

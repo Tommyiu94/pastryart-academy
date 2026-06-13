@@ -33,8 +33,10 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
     setUploading(false);
 
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || "Failed to upload recipe");
+      const data = await res.json().catch(() => null);
+      setError(
+        data?.error || `Failed to upload recipe (${res.status} ${res.statusText})`
+      );
       return;
     }
 
