@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Recipe } from "@/generated/prisma/client";
+import Spinner from "@/components/Spinner";
 
 export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function uploadRecipe(e: React.FormEvent) {
     e.preventDefault();
@@ -44,8 +46,13 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
 
   async function deleteRecipe(id: string) {
     if (!confirm("Delete this recipe?")) return;
+    setDeletingId(id);
     const res = await fetch(`/api/admin/recipes/${id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      router.refresh();
+    } else {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -90,8 +97,9 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
           <button
             type="submit"
             disabled={uploading}
-            className="mt-1 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+            className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
+            {uploading && <Spinner className="h-4 w-4" />}
             {uploading ? "Uploading..." : "Upload recipe"}
           </button>
         </form>
@@ -118,8 +126,10 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
             </a>
             <button
               onClick={() => deleteRecipe(recipe.id)}
-              className="text-sm text-red-600 hover:underline"
+              disabled={deletingId === recipe.id}
+              className="flex items-center gap-1.5 text-sm text-red-600 hover:underline disabled:opacity-60"
             >
+              {deletingId === recipe.id && <Spinner className="h-3.5 w-3.5" />}
               Delete
             </button>
           </li>

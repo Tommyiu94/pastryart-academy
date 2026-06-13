@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/components/Spinner";
 
 type Intake = { id: string; name: string };
 
@@ -76,8 +77,9 @@ export default function LoginForm({ intakes }: { intakes: Intake[] }) {
       <button
         type="submit"
         disabled={loading}
-        className="mt-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+        className="mt-2 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
       >
+        {loading && <Spinner className="h-4 w-4" />}
         {loading ? "Signing in..." : "Sign in"}
       </button>
     </form>

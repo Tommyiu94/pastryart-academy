@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Intake, Pastry, Lesson } from "@/generated/prisma/client";
+import Spinner from "@/components/Spinner";
 
 type IntakeWithPastries = Intake & {
   pastries: (Pastry & { lessons: Lesson[] })[];
@@ -20,6 +21,8 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
   // New pastry
   const [newPastryName, setNewPastryName] = useState("");
   const [addingPastry, setAddingPastry] = useState(false);
+
+  const [deletingIntake, setDeletingIntake] = useState(false);
 
   async function saveDetails(e: React.FormEvent) {
     e.preventDefault();
@@ -57,10 +60,13 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
     if (!confirm(`Delete "${intake.name}" and all its pastries and lessons? This cannot be undone.`)) {
       return;
     }
+    setDeletingIntake(true);
     const res = await fetch(`/api/admin/intakes/${intake.id}`, { method: "DELETE" });
     if (res.ok) {
       router.push("/admin");
       router.refresh();
+    } else {
+      setDeletingIntake(false);
     }
   }
 
@@ -99,8 +105,10 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
         <h1 className="text-2xl font-bold text-amber-900">{intake.name}</h1>
         <button
           onClick={deleteIntake}
-          className="rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50"
+          disabled={deletingIntake}
+          className="flex items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
+          {deletingIntake && <Spinner className="h-4 w-4" />}
           Delete intake
         </button>
       </div>
@@ -133,8 +141,9 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
           <button
             type="submit"
             disabled={savingDetails}
-            className="mt-1 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+            className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
+            {savingDetails && <Spinner className="h-4 w-4" />}
             {savingDetails ? "Saving..." : "Save"}
           </button>
         </form>
@@ -154,8 +163,9 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
           <button
             type="submit"
             disabled={addingPastry}
-            className="rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+            className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
+            {addingPastry && <Spinner className="h-4 w-4" />}
             {addingPastry ? "Adding..." : "Add"}
           </button>
         </form>
@@ -179,13 +189,15 @@ function PastryCard({
   onDeletePastry,
 }: {
   pastry: Pastry & { lessons: Lesson[] };
-  onDeletePastry: (id: string, name: string) => void;
+  onDeletePastry: (id: string, name: string) => Promise<void>;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [deletingPastry, setDeletingPastry] = useState(false);
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   async function uploadLesson(e: React.FormEvent) {
     e.preventDefault();
@@ -218,8 +230,19 @@ function PastryCard({
 
   async function deleteLesson(lessonId: string) {
     if (!confirm("Delete this lesson PDF?")) return;
+    setDeletingLessonId(lessonId);
     const res = await fetch(`/api/admin/lessons/${lessonId}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    if (res.ok) {
+      router.refresh();
+    } else {
+      setDeletingLessonId(null);
+    }
+  }
+
+  async function handleDeletePastry() {
+    setDeletingPastry(true);
+    await onDeletePastry(pastry.id, pastry.name);
+    setDeletingPastry(false);
   }
 
   return (
@@ -227,9 +250,11 @@ function PastryCard({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-amber-900">{pastry.name}</h3>
         <button
-          onClick={() => onDeletePastry(pastry.id, pastry.name)}
-          className="rounded-md border border-red-300 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-50"
+          onClick={handleDeletePastry}
+          disabled={deletingPastry}
+          className="flex items-center gap-2 rounded-md border border-red-300 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
+          {deletingPastry && <Spinner className="h-3.5 w-3.5" />}
           Delete pastry
         </button>
       </div>
@@ -250,8 +275,10 @@ function PastryCard({
             </a>
             <button
               onClick={() => deleteLesson(lesson.id)}
-              className="text-sm text-red-600 hover:underline"
+              disabled={deletingLessonId === lesson.id}
+              className="flex items-center gap-1.5 text-sm text-red-600 hover:underline disabled:opacity-60"
             >
+              {deletingLessonId === lesson.id && <Spinner className="h-3.5 w-3.5" />}
               Delete
             </button>
           </li>
@@ -286,8 +313,9 @@ function PastryCard({
         <button
           type="submit"
           disabled={uploading}
-          className="rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+          className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-60"
         >
+          {uploading && <Spinner className="h-4 w-4" />}
           {uploading ? "Uploading..." : "Upload lesson"}
         </button>
       </form>
