@@ -12,15 +12,20 @@ function safeFileName(name: string) {
   return `${Date.now()}-${base}${ext}`;
 }
 
+const BLOB_CONFIGURED = Boolean(
+  process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID
+);
+
 /**
  * Stores an uploaded PDF and returns a publicly accessible URL.
- * Uses Vercel Blob when BLOB_READ_WRITE_TOKEN is configured, otherwise
- * falls back to /public/uploads for local development.
+ * Uses Vercel Blob when configured (via BLOB_READ_WRITE_TOKEN or the
+ * Vercel Blob integration's BLOB_STORE_ID + OIDC auth), otherwise falls
+ * back to /public/uploads for local development.
  */
 export async function savePdf(file: File): Promise<string> {
   const fileName = safeFileName(file.name);
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  if (BLOB_CONFIGURED) {
     const { put } = await import("@vercel/blob");
     const blob = await put(fileName, file, {
       access: "public",
@@ -36,7 +41,7 @@ export async function savePdf(file: File): Promise<string> {
 }
 
 export async function deletePdf(url: string): Promise<void> {
-  if (process.env.BLOB_READ_WRITE_TOKEN && url.includes("blob.vercel-storage.com")) {
+  if (BLOB_CONFIGURED && url.includes("blob.vercel-storage.com")) {
     const { del } = await import("@vercel/blob");
     await del(url);
     return;
