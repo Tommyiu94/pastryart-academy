@@ -77,6 +77,27 @@ Neon, via the Vercel integration) and Vercel Blob.
 6. **Deploy**. Once deployed, visit `/admin/login`, create your intakes (set a password per
    intake), add pastries, and upload lesson and recipe PDFs.
 
+## Subdomain layout
+
+The app serves two audiences on two subdomains of the same Vercel project:
+
+- `learn.pastryart-academy.com` — student portal (`/login`, `/curriculum`, `/recipes`). The
+  `/admin` and `/api/admin` routes return 404 here.
+- `admin.pastryart-academy.com` — admin panel. Visiting `/` redirects to `/admin`, and all
+  non-admin routes return 404 here.
+
+To set this up:
+
+1. In the Vercel project, go to Settings → Domains and add `admin.pastryart-academy.com` (in
+   addition to `learn.pastryart-academy.com`).
+2. At Porkbun, add a CNAME record for `admin` pointing at the same target Vercel gives you for
+   `learn` (typically `cname.vercel-dns.com`).
+3. Wait for DNS to propagate and Vercel to issue the certificate, then visit
+   `https://admin.pastryart-academy.com/admin/login`.
+
+Other hostnames (localhost, Vercel preview URLs, etc.) are unaffected and can reach both the
+student and admin routes as before.
+
 ## Notes
 
 - Each intake has one shared password — give it to all students in that batch.

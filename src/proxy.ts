@@ -6,6 +6,9 @@ import { STUDENT_COOKIE, ADMIN_COOKIE } from "@/lib/auth";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
 const secretKey = new TextEncoder().encode(SESSION_SECRET);
 
+const ADMIN_HOST = "admin.pastryart-academy.com";
+const STUDENT_HOST = "learn.pastryart-academy.com";
+
 async function hasValidSession(request: NextRequest, cookieName: string, type: string) {
   const token = request.cookies.get(cookieName)?.value;
   if (!token) return false;
@@ -19,6 +22,22 @@ async function hasValidSession(request: NextRequest, cookieName: string, type: s
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get("host")?.split(":")[0];
+  const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
+
+  // Keep the admin panel and the student portal on separate subdomains.
+  if (hostname === ADMIN_HOST) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    if (!isAdminPath) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+  } else if (hostname === STUDENT_HOST) {
+    if (isAdminPath) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+  }
 
   if (pathname.startsWith("/api/admin")) {
     if (pathname === "/api/admin/login") return NextResponse.next();
@@ -47,5 +66,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/curriculum/:path*", "/recipes/:path*"],
+  matcher: ["/", "/admin/:path*", "/api/admin/:path*", "/curriculum/:path*", "/recipes/:path*"],
 };
