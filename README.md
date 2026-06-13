@@ -21,7 +21,9 @@ A small web app for the academy's students and admins:
    cp .env.example .env
    ```
 
-   - `DATABASE_URL` — leave as the default SQLite file for local dev.
+   - `DATABASE_URL` — a Postgres connection string. For local dev, copy the value from your
+     Vercel project's `DATABASE_URL` env var (Settings → Environment Variables), or point at
+     your own local/dev Postgres instance.
    - `ADMIN_PASSWORD` — the password used to access `/admin`.
    - `SESSION_SECRET` — a long random string used to sign session cookies. Generate one with:
 
@@ -34,7 +36,7 @@ A small web app for the academy's students and admins:
 3. Apply database migrations:
 
    ```bash
-   npx prisma migrate dev
+   npx prisma migrate dev --name init
    ```
 
 4. Start the dev server:
@@ -51,15 +53,15 @@ A small web app for the academy's students and admins:
 
 ## Deploying to Vercel (free tier)
 
-The app needs a persistent database and persistent file storage in production — SQLite and
-the local filesystem don't survive on Vercel's serverless infrastructure, so we swap them for
-Postgres (via Neon) and Vercel Blob.
+The app needs a persistent database and persistent file storage in production — the local
+filesystem doesn't survive on Vercel's serverless infrastructure, so we use Postgres (e.g.
+Neon, via the Vercel integration) and Vercel Blob.
 
 1. **Push this repo to GitHub**, then import it into [Vercel](https://vercel.com/new).
 
 2. **Add a Postgres database**: in the Vercel project, go to Storage → Create Database →
-   choose the Neon (Postgres) integration. This automatically sets a `DATABASE_URL`
-   environment variable on your project.
+   choose the Neon (Postgres) integration, with environment variable prefix `DATABASE` so it
+   sets `DATABASE_URL` on your project.
 
 3. **Add Vercel Blob storage**: Storage → Create → Blob. This automatically sets
    `BLOB_READ_WRITE_TOKEN` on your project. With this set, uploaded PDFs are stored in Blob
@@ -69,22 +71,11 @@ Postgres (via Neon) and Vercel Blob.
    - `ADMIN_PASSWORD` — a strong password for the admin panel.
    - `SESSION_SECRET` — a long random string (see command above).
 
-5. **Switch the Prisma datasource to Postgres**: change `provider = "sqlite"` to
-   `provider = "postgresql"` in [prisma/schema.prisma](prisma/schema.prisma), then run:
+5. **Set the build command** to apply pending migrations before building (Project Settings →
+   Build & Development Settings → Build Command: `npx prisma migrate deploy && next build`).
 
-   ```bash
-   npx prisma migrate dev --name init_postgres
-   ```
-
-   locally against your Neon `DATABASE_URL` (pulled via `vercel env pull`) to create the
-   schema, and commit the new migration.
-
-6. **Deploy**. Set the build command to apply pending migrations before building (Project
-   Settings → Build & Development Settings → Build Command:
-   `npx prisma migrate deploy && next build`).
-
-7. Once deployed, visit `/admin/login`, create your intakes (set a password per intake),
-   add pastries, and upload lesson and recipe PDFs.
+6. **Deploy**. Once deployed, visit `/admin/login`, create your intakes (set a password per
+   intake), add pastries, and upload lesson and recipe PDFs.
 
 ## Notes
 
