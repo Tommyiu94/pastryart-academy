@@ -150,7 +150,7 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
       </div>
 
       <div className="mt-8 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">Add pastry</h2>
+        <h2 className="font-semibold text-amber-900">Add Theory Lesson</h2>
         <form onSubmit={addPastry} className="mt-4 flex gap-3">
           <input
             type="text"
