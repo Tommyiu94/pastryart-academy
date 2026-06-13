@@ -21,8 +21,8 @@ export async function POST(request: Request) {
     pdfUrl = await savePdf(file);
   } catch (err) {
     console.error("Failed to save lesson PDF", err);
-    const message = err instanceof Error ? err.message : "Failed to upload lesson";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = err instanceof Error && err.message ? err.message : String(err);
+    return NextResponse.json({ error: `Failed to upload lesson: ${message}` }, { status: 500 });
   }
 
   const count = await prisma.lesson.count({ where: { pastryId } });

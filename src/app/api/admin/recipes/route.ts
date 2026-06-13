@@ -21,8 +21,8 @@ export async function POST(request: Request) {
     pdfUrl = await savePdf(file);
   } catch (err) {
     console.error("Failed to save recipe PDF", err);
-    const message = err instanceof Error ? err.message : "Failed to upload recipe";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = err instanceof Error && err.message ? err.message : String(err);
+    return NextResponse.json({ error: `Failed to upload recipe: ${message}` }, { status: 500 });
   }
 
   const recipe = await prisma.recipe.create({
