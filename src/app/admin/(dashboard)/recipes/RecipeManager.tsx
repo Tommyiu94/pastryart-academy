@@ -1,0 +1,131 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { Recipe } from "@/generated/prisma/client";
+
+export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function uploadRecipe(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    if (!file) {
+      setError("Please choose a PDF file");
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("category", category);
+    formData.append("file", file);
+
+    const res = await fetch("/api/admin/recipes", { method: "POST", body: formData });
+    setUploading(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || "Failed to upload recipe");
+      return;
+    }
+
+    setName("");
+    setCategory("");
+    setFile(null);
+    router.refresh();
+  }
+
+  async function deleteRecipe(id: string) {
+    if (!confirm("Delete this recipe?")) return;
+    const res = await fetch(`/api/admin/recipes/${id}`, { method: "DELETE" });
+    if (res.ok) router.refresh();
+  }
+
+  return (
+    <div>
+      <div className="mt-6 max-w-lg rounded-xl border border-amber-200 bg-white p-5 shadow">
+        <h2 className="font-semibold text-amber-900">Add recipe</h2>
+        <form onSubmit={uploadRecipe} className="mt-4 flex flex-col gap-3">
+          <div>
+            <label className="block text-sm font-medium text-amber-900">Recipe name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Classic Apple Pie"
+              required
+              className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-amber-900">
+              Category (optional)
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Pies"
+              className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-amber-900">PDF file</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              required
+              className="mt-1 text-sm"
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            disabled={uploading}
+            className="mt-1 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+          >
+            {uploading ? "Uploading..." : "Upload recipe"}
+          </button>
+        </form>
+      </div>
+
+      <ul className="mt-8 flex flex-col gap-2">
+        {recipes.map((recipe) => (
+          <li
+            key={recipe.id}
+            className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 shadow"
+          >
+            <a
+              href={recipe.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-amber-900 hover:underline"
+            >
+              {recipe.name}
+              {recipe.category && (
+                <span className="ml-2 text-xs font-normal text-amber-500">
+                  {recipe.category}
+                </span>
+              )}
+            </a>
+            <button
+              onClick={() => deleteRecipe(recipe.id)}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+        {recipes.length === 0 && <p className="text-amber-700">No recipes uploaded yet.</p>}
+      </ul>
+    </div>
+  );
+}

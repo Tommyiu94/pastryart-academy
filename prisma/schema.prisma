@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Intake {
+  id           String   @id @default(cuid())
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  pastries     Pastry[]
+}
+
+model Pastry {
+  id        String   @id @default(cuid())
+  name      String
+  intakeId  String
+  intake    Intake   @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  pastryId  String
+  pastry    Pastry   @relation(fields: [pastryId], references: [id], onDelete: Cascade)
+  title     String
+  pdfUrl    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Recipe {
+  id        String   @id @default(cuid())
+  name      String
+  category  String?
+  pdfUrl    String
+  createdAt DateTime @default(now())
+}
