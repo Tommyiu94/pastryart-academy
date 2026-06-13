@@ -63,9 +63,15 @@ Neon, via the Vercel integration) and Vercel Blob.
    choose the Neon (Postgres) integration, with environment variable prefix `DATABASE` so it
    sets `DATABASE_URL` on your project.
 
-3. **Add Vercel Blob storage**: Storage → Create → Blob. This automatically sets
-   `BLOB_READ_WRITE_TOKEN` on your project. With this set, uploaded PDFs are stored in Blob
-   instead of the local filesystem.
+3. **Add Vercel Blob storage**: Storage → Create → Blob, then connect it to this project.
+   With Blob connected, uploaded PDFs are stored in Blob instead of the local filesystem.
+
+   - If your Blob store was connected via `BLOB_STORE_ID` (OIDC auth) rather than a
+     `BLOB_READ_WRITE_TOKEN`, also add a `BLOB_READ_WRITE_TOKEN` env var (find it on the
+     Blob store's page in Vercel, under its `.env.local`/Quickstart tab). This token is
+     required so the browser can upload large PDFs **directly** to Blob, bypassing the
+     ~4.5MB request body limit on serverless functions. Without it, uploads larger than
+     that limit will fail.
 
 4. **Set the remaining environment variables** in Project Settings → Environment Variables:
    - `ADMIN_PASSWORD` — a strong password for the admin panel.

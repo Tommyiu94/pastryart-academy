@@ -17,6 +17,13 @@ const BLOB_CONFIGURED = Boolean(
 );
 
 /**
+ * Whether the browser can upload PDFs directly to Vercel Blob, bypassing the
+ * serverless function body size limit. Requires BLOB_READ_WRITE_TOKEN, since
+ * client upload tokens can't be generated via OIDC auth.
+ */
+export const DIRECT_UPLOAD_ENABLED = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
+/**
  * Stores an uploaded PDF and returns a publicly accessible URL.
  * Uses Vercel Blob when configured (via BLOB_READ_WRITE_TOKEN or the
  * Vercel Blob integration's BLOB_STORE_ID + OIDC auth), otherwise falls

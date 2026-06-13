@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import type { Recipe } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
 
-export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
+export default function RecipeManager({
+  recipes,
+  directUploadEnabled,
+}: {
+  recipes: Recipe[];
+  directUploadEnabled: boolean;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -24,26 +30,48 @@ export default function RecipeManager({ recipes }: { recipes: Recipe[] }) {
     }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("category", category);
-    formData.append("file", file);
 
-    const res = await fetch("/api/admin/recipes", { method: "POST", body: formData });
-    setUploading(false);
+    try {
+      let res: Response;
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      setError(
-        data?.error || `Failed to upload recipe (${res.status} ${res.statusText})`
-      );
-      return;
+      if (directUploadEnabled) {
+        const { upload } = await import("@vercel/blob/client");
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/blob-upload",
+        });
+
+        res = await fetch("/api/admin/recipes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, category, pdfUrl: blob.url }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("category", category);
+        formData.append("file", file);
+
+        res = await fetch("/api/admin/recipes", { method: "POST", body: formData });
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(
+          data?.error || `Failed to upload recipe (${res.status} ${res.statusText})`
+        );
+        return;
+      }
+
+      setName("");
+      setCategory("");
+      setFile(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload recipe");
+    } finally {
+      setUploading(false);
     }
-
-    setName("");
-    setCategory("");
-    setFile(null);
-    router.refresh();
   }
 
   async function deleteRecipe(id: string) {

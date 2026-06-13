@@ -9,7 +9,13 @@ type IntakeWithPastries = Intake & {
   pastries: (Pastry & { lessons: Lesson[] })[];
 };
 
-export default function IntakeManager({ intake }: { intake: IntakeWithPastries }) {
+export default function IntakeManager({
+  intake,
+  directUploadEnabled,
+}: {
+  intake: IntakeWithPastries;
+  directUploadEnabled: boolean;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
 
@@ -174,7 +180,12 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
       <h2 className="mt-10 text-xl font-bold text-amber-900">Pastries &amp; Lessons</h2>
       <div className="mt-4 flex flex-col gap-4">
         {intake.pastries.map((pastry) => (
-          <PastryCard key={pastry.id} pastry={pastry} onDeletePastry={deletePastry} />
+          <PastryCard
+            key={pastry.id}
+            pastry={pastry}
+            onDeletePastry={deletePastry}
+            directUploadEnabled={directUploadEnabled}
+          />
         ))}
         {intake.pastries.length === 0 && (
           <p className="text-amber-700">No pastries added yet.</p>
@@ -187,9 +198,11 @@ export default function IntakeManager({ intake }: { intake: IntakeWithPastries }
 function PastryCard({
   pastry,
   onDeletePastry,
+  directUploadEnabled,
 }: {
   pastry: Pastry & { lessons: Lesson[] };
   onDeletePastry: (id: string, name: string) => Promise<void>;
+  directUploadEnabled: boolean;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -209,25 +222,47 @@ function PastryCard({
     }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append("pastryId", pastry.id);
-    formData.append("title", title);
-    formData.append("file", file);
 
-    const res = await fetch("/api/admin/lessons", { method: "POST", body: formData });
-    setUploading(false);
+    try {
+      let res: Response;
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => null);
-      setError(
-        data?.error || `Failed to upload lesson (${res.status} ${res.statusText})`
-      );
-      return;
+      if (directUploadEnabled) {
+        const { upload } = await import("@vercel/blob/client");
+        const blob = await upload(file.name, file, {
+          access: "public",
+          handleUploadUrl: "/api/admin/blob-upload",
+        });
+
+        res = await fetch("/api/admin/lessons", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pastryId: pastry.id, title, pdfUrl: blob.url }),
+        });
+      } else {
+        const formData = new FormData();
+        formData.append("pastryId", pastry.id);
+        formData.append("title", title);
+        formData.append("file", file);
+
+        res = await fetch("/api/admin/lessons", { method: "POST", body: formData });
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(
+          data?.error || `Failed to upload lesson (${res.status} ${res.statusText})`
+        );
+        return;
+      }
+
+      setTitle("");
+      setFile(null);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload lesson");
+    } finally {
+      setUploading(false);
     }
-
-    setTitle("");
-    setFile(null);
-    router.refresh();
   }
 
   async function deleteLesson(lessonId: string) {

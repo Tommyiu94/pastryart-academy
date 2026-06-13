@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DIRECT_UPLOAD_ENABLED } from "@/lib/storage";
 import RecipeManager from "./RecipeManager";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function AdminRecipesPage() {
       <p className="mt-1 text-amber-700">
         Upload reference recipes available to any student who has logged in.
       </p>
-      <RecipeManager recipes={recipes} />
+      <RecipeManager recipes={recipes} directUploadEnabled={DIRECT_UPLOAD_ENABLED} />
     </div>
   );
 }
