@@ -14,12 +14,6 @@ export default function Home() {
           >
             Student Login
           </Link>
-          <Link
-            href="/admin/login"
-            className="rounded-lg border border-amber-300 bg-white px-6 py-3 font-medium text-amber-800 shadow hover:bg-amber-100"
-          >
-            Admin Login
-          </Link>
         </div>
       </div>
     </div>
