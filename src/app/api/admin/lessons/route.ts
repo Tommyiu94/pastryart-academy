@@ -16,7 +16,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "File must be a PDF" }, { status: 400 });
   }
 
-  const pdfUrl = await savePdf(file);
+  let pdfUrl: string;
+  try {
+    pdfUrl = await savePdf(file);
+  } catch (err) {
+    console.error("Failed to save lesson PDF", err);
+    const message = err instanceof Error ? err.message : "Failed to upload lesson";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   const count = await prisma.lesson.count({ where: { pastryId } });
   const lesson = await prisma.lesson.create({
