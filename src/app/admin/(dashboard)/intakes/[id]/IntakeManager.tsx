@@ -182,7 +182,7 @@ export default function IntakeManager({
 
   return (
     <div>
-      <div className="mt-2 flex items-start justify-between gap-2">
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
         <h1 className="text-2xl font-bold text-amber-900">
           {intake.name}
           {intake.archived && (
