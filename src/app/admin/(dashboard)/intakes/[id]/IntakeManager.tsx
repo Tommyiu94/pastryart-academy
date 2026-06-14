@@ -4,17 +4,22 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Intake, Pastry, Lesson } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
+import type { Dictionary } from "@/lib/i18n";
 
 type IntakeWithPastries = Intake & {
   pastries: (Pastry & { lessons: Lesson[] })[];
 };
 
+type T = Dictionary["adminIntakeDetail"];
+
 export default function IntakeManager({
   intake,
   directUploadEnabled,
+  t,
 }: {
   intake: IntakeWithPastries;
   directUploadEnabled: boolean;
+  t: T;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -54,7 +59,7 @@ export default function IntakeManager({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Failed to update intake");
+      setError(data.error || t.failedUpdate);
       return;
     }
 
@@ -63,7 +68,7 @@ export default function IntakeManager({
   }
 
   async function deleteIntake() {
-    if (!confirm(`Delete "${intake.name}" and all its pastries and lessons? This cannot be undone.`)) {
+    if (!confirm(t.confirmDeleteIntake.replace("{name}", intake.name))) {
       return;
     }
     setDeletingIntake(true);
@@ -91,7 +96,7 @@ export default function IntakeManager({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Failed to add pastry");
+      setError(data.error || t.failedAddPastry);
       return;
     }
 
@@ -100,7 +105,7 @@ export default function IntakeManager({
   }
 
   async function deletePastry(pastryId: string, pastryName: string) {
-    if (!confirm(`Delete "${pastryName}" and all its lessons?`)) return;
+    if (!confirm(t.confirmDeletePastry.replace("{name}", pastryName))) return;
     const res = await fetch(`/api/admin/pastries/${pastryId}`, { method: "DELETE" });
     if (res.ok) router.refresh();
   }
@@ -115,15 +120,15 @@ export default function IntakeManager({
           className="flex items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
           {deletingIntake && <Spinner className="h-4 w-4" />}
-          Delete intake
+          {t.deleteIntake}
         </button>
       </div>
 
       <div className="mt-6 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">Intake settings</h2>
+        <h2 className="font-semibold text-amber-900">{t.settingsTitle}</h2>
         <form onSubmit={saveDetails} className="mt-4 flex flex-col gap-3">
           <div>
-            <label className="block text-sm font-medium text-amber-900">Intake name</label>
+            <label className="block text-sm font-medium text-amber-900">{t.nameLabel}</label>
             <input
               type="text"
               value={name}
@@ -133,7 +138,7 @@ export default function IntakeManager({
           </div>
           <div>
             <label className="block text-sm font-medium text-amber-900">
-              New password (leave blank to keep current)
+              {t.newPasswordLabel}
             </label>
             <input
               type="text"
@@ -150,19 +155,19 @@ export default function IntakeManager({
             className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
             {savingDetails && <Spinner className="h-4 w-4" />}
-            {savingDetails ? "Saving..." : "Save"}
+            {savingDetails ? t.saving : t.save}
           </button>
         </form>
       </div>
 
       <div className="mt-8 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">Add Theory Lesson</h2>
+        <h2 className="font-semibold text-amber-900">{t.addTheoryLesson}</h2>
         <form onSubmit={addPastry} className="mt-4 flex gap-3">
           <input
             type="text"
             value={newPastryName}
             onChange={(e) => setNewPastryName(e.target.value)}
-            placeholder="e.g. Apple Pie"
+            placeholder={t.pastryNamePlaceholder}
             required
             className="flex-1 rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
           />
@@ -172,12 +177,12 @@ export default function IntakeManager({
             className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
             {addingPastry && <Spinner className="h-4 w-4" />}
-            {addingPastry ? "Adding..." : "Add"}
+            {addingPastry ? t.adding : t.add}
           </button>
         </form>
       </div>
 
-      <h2 className="mt-10 text-xl font-bold text-amber-900">Pastries &amp; Lessons</h2>
+      <h2 className="mt-10 text-xl font-bold text-amber-900">{t.pastriesAndLessons}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {intake.pastries.map((pastry) => (
           <PastryCard
@@ -185,11 +190,10 @@ export default function IntakeManager({
             pastry={pastry}
             onDeletePastry={deletePastry}
             directUploadEnabled={directUploadEnabled}
+            t={t}
           />
         ))}
-        {intake.pastries.length === 0 && (
-          <p className="text-amber-700">No pastries added yet.</p>
-        )}
+        {intake.pastries.length === 0 && <p className="text-amber-700">{t.noPastries}</p>}
       </div>
     </div>
   );
@@ -199,10 +203,12 @@ function PastryCard({
   pastry,
   onDeletePastry,
   directUploadEnabled,
+  t,
 }: {
   pastry: Pastry & { lessons: Lesson[] };
   onDeletePastry: (id: string, name: string) => Promise<void>;
   directUploadEnabled: boolean;
+  t: T;
 }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -217,7 +223,7 @@ function PastryCard({
     setError("");
 
     if (!file) {
-      setError("Please choose a PDF file");
+      setError(t.pleaseChooseFile);
       return;
     }
 
@@ -250,7 +256,7 @@ function PastryCard({
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         setError(
-          data?.error || `Failed to upload lesson (${res.status} ${res.statusText})`
+          data?.error || `${t.failedUploadLesson} (${res.status} ${res.statusText})`
         );
         return;
       }
@@ -259,14 +265,14 @@ function PastryCard({
       setFile(null);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload lesson");
+      setError(err instanceof Error ? err.message : t.failedUploadLesson);
     } finally {
       setUploading(false);
     }
   }
 
   async function deleteLesson(lessonId: string) {
-    if (!confirm("Delete this lesson PDF?")) return;
+    if (!confirm(t.confirmDeleteLesson)) return;
     setDeletingLessonId(lessonId);
     const res = await fetch(`/api/admin/lessons/${lessonId}`, { method: "DELETE" });
     if (res.ok) {
@@ -292,7 +298,7 @@ function PastryCard({
           className="flex items-center gap-2 rounded-md border border-red-300 px-3 py-1 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
         >
           {deletingPastry && <Spinner className="h-3.5 w-3.5" />}
-          Delete pastry
+          {t.deletePastry}
         </button>
       </div>
 
@@ -316,29 +322,29 @@ function PastryCard({
               className="flex items-center gap-1.5 text-sm text-red-600 hover:underline disabled:opacity-60"
             >
               {deletingLessonId === lesson.id && <Spinner className="h-3.5 w-3.5" />}
-              Delete
+              {t.delete}
             </button>
           </li>
         ))}
         {pastry.lessons.length === 0 && (
-          <li className="text-sm text-amber-600">No lessons uploaded yet.</li>
+          <li className="text-sm text-amber-600">{t.noLessons}</li>
         )}
       </ul>
 
       <form onSubmit={uploadLesson} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-amber-900">Lesson title</label>
+          <label className="block text-xs font-medium text-amber-900">{t.lessonTitleLabel}</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Pastry Theory Module 1"
+            placeholder={t.lessonTitlePlaceholder}
             required
             className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-amber-900">PDF file</label>
+          <label className="block text-xs font-medium text-amber-900">{t.pdfFileLabel}</label>
           <input
             type="file"
             accept="application/pdf"
@@ -353,7 +359,7 @@ function PastryCard({
           className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-60"
         >
           {uploading && <Spinner className="h-4 w-4" />}
-          {uploading ? "Uploading..." : "Upload lesson"}
+          {uploading ? t.uploading : t.uploadLesson}
         </button>
       </form>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import LanguageToggle from "@/components/LanguageToggle";
+import type { Dictionary, Locale } from "@/lib/i18n";
 
-export default function StudentNav({ intakeName }: { intakeName: string }) {
+export default function StudentNav({
+  intakeName,
+  locale,
+  t,
+}: {
+  intakeName: string;
+  locale: Locale;
+  t: Dictionary["studentNav"];
+}) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -29,17 +39,18 @@ export default function StudentNav({ intakeName }: { intakeName: string }) {
         </div>
         <nav className="flex items-center gap-2">
           <Link href="/curriculum" className={linkClass("/curriculum")}>
-            Curriculum
+            {t.curriculum}
           </Link>
           <Link href="/recipes" className={linkClass("/recipes")}>
-            Recipes
+            {t.recipes}
           </Link>
           <button
             onClick={handleLogout}
             className="rounded-md px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100"
           >
-            Log out
+            {t.logout}
           </button>
+          <LanguageToggle locale={locale} />
         </nav>
       </div>
     </header>

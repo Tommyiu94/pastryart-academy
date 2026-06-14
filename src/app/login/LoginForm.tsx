@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/Spinner";
+import type { Dictionary } from "@/lib/i18n";
 
 type Intake = { id: string; name: string };
 
-export default function LoginForm({ intakes }: { intakes: Intake[] }) {
+export default function LoginForm({
+  intakes,
+  t,
+}: {
+  intakes: Intake[];
+  t: Dictionary["studentLogin"];
+}) {
   const router = useRouter();
   const [intakeId, setIntakeId] = useState(intakes[0]?.id ?? "");
   const [password, setPassword] = useState("");
@@ -28,7 +35,7 @@ export default function LoginForm({ intakes }: { intakes: Intake[] }) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Login failed");
+      setError(data.error || t.loginFailed);
       return;
     }
 
@@ -37,17 +44,13 @@ export default function LoginForm({ intakes }: { intakes: Intake[] }) {
   }
 
   if (intakes.length === 0) {
-    return (
-      <p className="mt-6 text-sm text-amber-700">
-        No intakes have been set up yet. Please check back later.
-      </p>
-    );
+    return <p className="mt-6 text-sm text-amber-700">{t.noIntakes}</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
       <div>
-        <label className="block text-sm font-medium text-amber-900">Intake</label>
+        <label className="block text-sm font-medium text-amber-900">{t.intakeLabel}</label>
         <select
           value={intakeId}
           onChange={(e) => setIntakeId(e.target.value)}
@@ -62,7 +65,7 @@ export default function LoginForm({ intakes }: { intakes: Intake[] }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-amber-900">Password</label>
+        <label className="block text-sm font-medium text-amber-900">{t.passwordLabel}</label>
         <input
           type="password"
           value={password}
@@ -80,7 +83,7 @@ export default function LoginForm({ intakes }: { intakes: Intake[] }) {
         className="mt-2 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
       >
         {loading && <Spinner className="h-4 w-4" />}
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? t.signingIn : t.signIn}
       </button>
     </form>
   );

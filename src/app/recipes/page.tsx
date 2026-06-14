@@ -1,11 +1,16 @@
 import { redirect } from "next/navigation";
 import { getStudentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import StudentNav from "@/components/StudentNav";
 
 export default async function RecipesPage() {
   const session = await getStudentSession();
   if (!session) redirect("/login");
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const recipes = await prisma.recipe.findMany({
     orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -13,15 +18,13 @@ export default async function RecipesPage() {
 
   return (
     <>
-      <StudentNav intakeName={session.intakeName} />
+      <StudentNav intakeName={session.intakeName} locale={locale} t={t.studentNav} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
-        <h1 className="text-2xl font-bold text-amber-900">Recipe Library</h1>
-        <p className="mt-1 text-amber-700">
-          Reference recipes to take with you into the industry.
-        </p>
+        <h1 className="text-2xl font-bold text-amber-900">{t.recipes.title}</h1>
+        <p className="mt-1 text-amber-700">{t.recipes.subtitle}</p>
 
         {recipes.length === 0 ? (
-          <p className="mt-8 text-amber-700">No recipes have been published yet.</p>
+          <p className="mt-8 text-amber-700">{t.recipes.empty}</p>
         ) : (
           <ul className="mt-8 flex flex-col gap-3">
             {recipes.map((recipe) => (
@@ -40,7 +43,7 @@ export default async function RecipesPage() {
                       </span>
                     )}
                   </span>
-                  <span className="text-sm text-amber-600">View PDF &rarr;</span>
+                  <span className="text-sm text-amber-600">{t.recipes.viewPdf}</span>
                 </a>
               </li>
             ))}

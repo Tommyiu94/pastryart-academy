@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { DIRECT_UPLOAD_ENABLED } from "@/lib/storage";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import IntakeManager from "./IntakeManager";
 
 export default async function AdminIntakePage({
@@ -10,6 +12,8 @@ export default async function AdminIntakePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const intake = await prisma.intake.findUnique({
     where: { id },
@@ -26,9 +30,13 @@ export default async function AdminIntakePage({
   return (
     <div>
       <Link href="/admin" className="text-sm text-amber-700 hover:underline">
-        &larr; Back to intakes
+        {t.adminIntakeDetail.back}
       </Link>
-      <IntakeManager intake={intake} directUploadEnabled={DIRECT_UPLOAD_ENABLED} />
+      <IntakeManager
+        intake={intake}
+        directUploadEnabled={DIRECT_UPLOAD_ENABLED}
+        t={t.adminIntakeDetail}
+      />
     </div>
   );
 }

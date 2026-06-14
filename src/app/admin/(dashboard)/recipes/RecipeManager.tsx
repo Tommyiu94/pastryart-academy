@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Recipe } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
+import type { Dictionary } from "@/lib/i18n";
 
 export default function RecipeManager({
   recipes,
   directUploadEnabled,
+  t,
 }: {
   recipes: Recipe[];
   directUploadEnabled: boolean;
+  t: Dictionary["adminRecipes"];
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -25,7 +28,7 @@ export default function RecipeManager({
     setError("");
 
     if (!file) {
-      setError("Please choose a PDF file");
+      setError(t.pleaseChooseFile);
       return;
     }
 
@@ -57,9 +60,7 @@ export default function RecipeManager({
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setError(
-          data?.error || `Failed to upload recipe (${res.status} ${res.statusText})`
-        );
+        setError(data?.error || `${t.failedUpload} (${res.status} ${res.statusText})`);
         return;
       }
 
@@ -68,14 +69,14 @@ export default function RecipeManager({
       setFile(null);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload recipe");
+      setError(err instanceof Error ? err.message : t.failedUpload);
     } finally {
       setUploading(false);
     }
   }
 
   async function deleteRecipe(id: string) {
-    if (!confirm("Delete this recipe?")) return;
+    if (!confirm(t.confirmDelete)) return;
     setDeletingId(id);
     const res = await fetch(`/api/admin/recipes/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -88,33 +89,33 @@ export default function RecipeManager({
   return (
     <div>
       <div className="mt-6 max-w-lg rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">Add recipe</h2>
+        <h2 className="font-semibold text-amber-900">{t.addRecipe}</h2>
         <form onSubmit={uploadRecipe} className="mt-4 flex flex-col gap-3">
           <div>
-            <label className="block text-sm font-medium text-amber-900">Recipe name</label>
+            <label className="block text-sm font-medium text-amber-900">{t.nameLabel}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Classic Apple Pie"
+              placeholder={t.namePlaceholder}
               required
               className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-amber-900">
-              Category (optional)
+              {t.categoryLabel}
             </label>
             <input
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Pies"
+              placeholder={t.categoryPlaceholder}
               className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-amber-900">PDF file</label>
+            <label className="block text-sm font-medium text-amber-900">{t.pdfFileLabel}</label>
             <input
               type="file"
               accept="application/pdf"
@@ -130,7 +131,7 @@ export default function RecipeManager({
             className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
             {uploading && <Spinner className="h-4 w-4" />}
-            {uploading ? "Uploading..." : "Upload recipe"}
+            {uploading ? t.uploading : t.upload}
           </button>
         </form>
       </div>
@@ -160,11 +161,11 @@ export default function RecipeManager({
               className="flex items-center gap-1.5 text-sm text-red-600 hover:underline disabled:opacity-60"
             >
               {deletingId === recipe.id && <Spinner className="h-3.5 w-3.5" />}
-              Delete
+              {t.delete}
             </button>
           </li>
         ))}
-        {recipes.length === 0 && <p className="text-amber-700">No recipes uploaded yet.</p>}
+        {recipes.length === 0 && <p className="text-amber-700">{t.empty}</p>}
       </ul>
     </div>
   );
