@@ -7,11 +7,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { name, password } = await request.json();
+  const { name, password, archived } = await request.json();
 
-  const data: { name?: string; passwordHash?: string } = {};
+  const data: { name?: string; passwordHash?: string; archived?: boolean } = {};
   if (name) data.name = name;
   if (password) data.passwordHash = await bcrypt.hash(password, 10);
+  if (typeof archived === "boolean") data.archived = archived;
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

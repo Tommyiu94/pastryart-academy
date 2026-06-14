@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import StudentNav from "@/components/StudentNav";
+import TrackedPdfLink from "@/components/TrackedPdfLink";
 
 export default async function RecipesPage() {
   const session = await getStudentSession();
@@ -29,10 +30,9 @@ export default async function RecipesPage() {
           <ul className="mt-8 flex flex-col gap-3">
             {recipes.map((recipe) => (
               <li key={recipe.id}>
-                <a
+                <TrackedPdfLink
                   href={recipe.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  trackUrl={`/api/recipes/${recipe.id}/view`}
                   className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
                 >
                   <span className="font-medium text-amber-900">
@@ -44,7 +44,7 @@ export default async function RecipesPage() {
                     )}
                   </span>
                   <span className="text-sm text-amber-600">{t.recipes.viewPdf}</span>
-                </a>
+                </TrackedPdfLink>
               </li>
             ))}
           </ul>

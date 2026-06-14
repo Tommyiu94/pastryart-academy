@@ -14,6 +14,7 @@ model Intake {
   id           String   @id @default(cuid())
   name         String
   passwordHash String
+  archived     Boolean  @default(false)
   createdAt    DateTime @default(now())
   pastries     Pastry[]
 }
@@ -29,19 +30,23 @@ model Pastry {
 }
 
 model Lesson {
-  id        String   @id @default(cuid())
-  pastryId  String
-  pastry    Pastry   @relation(fields: [pastryId], references: [id], onDelete: Cascade)
-  title     String
-  pdfUrl    String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  pastryId       String
+  pastry         Pastry    @relation(fields: [pastryId], references: [id], onDelete: Cascade)
+  title          String
+  pdfUrl         String
+  order          Int       @default(0)
+  viewCount      Int       @default(0)
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model Recipe {
-  id        String   @id @default(cuid())
-  name      String
-  category  String?
-  pdfUrl    String
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  name           String
+  category       String?
+  pdfUrl         String
+  viewCount      Int       @default(0)
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
 }
