@@ -21,7 +21,7 @@ const en = {
     noIntakes: "No intakes have been set up yet. Please check back later.",
   },
   studentNav: {
-    curriculum: "Curriculum",
+    curriculum: "Theory Lessons",
     recipes: "Recipes",
     logout: "Log out",
   },
@@ -183,7 +183,7 @@ const zh: typeof en = {
     noIntakes: "目前尚未設置任何班級，請稍後再查看。",
   },
   studentNav: {
-    curriculum: "課程",
+    curriculum: "理論課程",
     recipes: "食譜",
     logout: "登出",
   },
