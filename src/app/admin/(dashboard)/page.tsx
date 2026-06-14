@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
+import FolderIcon from "@/components/FolderIcon";
 import NewIntakeForm from "./NewIntakeForm";
 
 export const dynamic = "force-dynamic";
@@ -47,15 +48,18 @@ export default async function AdminIntakesPage({
           <li key={intake.id}>
             <Link
               href={`/admin/intakes/${intake.id}`}
-              className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
+              className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
             >
-              <span className="font-medium text-amber-900">
-                {intake.name}
-                {intake.archived && (
-                  <span className="ml-2 text-xs font-normal text-amber-500">
-                    {t.adminIntakes.archived}
-                  </span>
-                )}
+              <span className="flex items-center gap-3">
+                <FolderIcon />
+                <span className="font-medium text-amber-900">
+                  {intake.name}
+                  {intake.archived && (
+                    <span className="ml-2 text-xs font-normal text-amber-500">
+                      {t.adminIntakes.archived}
+                    </span>
+                  )}
+                </span>
               </span>
               <span className="text-sm text-amber-600">
                 {intake._count.pastries}{" "}
