@@ -332,6 +332,10 @@ function PastryCard({
   const [lessons, setLessons] = useState(pastry.lessons);
   const [draggedLessonIndex, setDraggedLessonIndex] = useState<number | null>(null);
 
+  const [editingName, setEditingName] = useState(false);
+  const [pastryName, setPastryName] = useState(pastry.name);
+  const [savingName, setSavingName] = useState(false);
+
   useEffect(() => {
     setLessons(pastry.lessons);
   }, [pastry.lessons]);
@@ -456,6 +460,38 @@ function PastryCard({
     setDeletingPastry(false);
   }
 
+  async function saveRename() {
+    setError("");
+    const trimmed = pastryName.trim();
+    if (!trimmed || trimmed === pastry.name) {
+      setPastryName(pastry.name);
+      setEditingName(false);
+      return;
+    }
+
+    setSavingName(true);
+    const res = await fetch(`/api/admin/pastries/${pastry.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    setSavingName(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || t.failedRenamePastry);
+      return;
+    }
+
+    setEditingName(false);
+    router.refresh();
+  }
+
+  function cancelRename() {
+    setPastryName(pastry.name);
+    setEditingName(false);
+  }
+
   function handleLessonDragStart(index: number) {
     setDraggedLessonIndex(index);
   }
@@ -485,8 +521,54 @@ function PastryCard({
 
   return (
     <div id={`pastry-${pastry.id}`} className="rounded-xl border border-amber-200 bg-white p-5 shadow">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-amber-900">{pastry.name}</h3>
+      <div className="flex items-center justify-between gap-2">
+        {editingName ? (
+          <div className="flex flex-1 items-center gap-2">
+            <input
+              type="text"
+              value={pastryName}
+              onChange={(e) => setPastryName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveRename();
+                if (e.key === "Escape") cancelRename();
+              }}
+              autoFocus
+              disabled={savingName}
+              className="flex-1 rounded-md border border-amber-300 px-2 py-1 text-lg font-semibold text-amber-900 focus:border-amber-500 focus:outline-none"
+            />
+            <button
+              onClick={saveRename}
+              disabled={savingName}
+              className="flex items-center gap-1.5 rounded-md bg-amber-700 px-3 py-1 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+            >
+              {savingName && <Spinner className="h-3.5 w-3.5" />}
+              {savingName ? t.saving : t.save}
+            </button>
+            <button
+              onClick={cancelRename}
+              disabled={savingName}
+              className="rounded-md border border-amber-300 px-3 py-1 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+            >
+              {t.cancel}
+            </button>
+          </div>
+        ) : (
+          <h3
+            onClick={() => setEditingName(true)}
+            title={t.renamePastry}
+            className="group flex cursor-pointer items-center gap-2 text-lg font-semibold text-amber-900"
+          >
+            {pastry.name}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4 text-amber-400 opacity-0 transition group-hover:opacity-100"
+            >
+              <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-8.5 8.5a1 1 0 0 1-.39.243l-3.5 1.25a.5.5 0 0 1-.638-.638l1.25-3.5a1 1 0 0 1 .244-.39l8.5-8.5Z" />
+            </svg>
+          </h3>
+        )}
         <button
           onClick={handleDeletePastry}
           disabled={deletingPastry}
