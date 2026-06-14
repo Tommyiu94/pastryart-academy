@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Recipe } from "@/generated/prisma/client";
+import type { Recipe, RecipeCategory } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
 import type { Dictionary } from "@/lib/i18n";
+
+type RecipeWithCategory = Recipe & { category: RecipeCategory | null };
 
 function formatDate(value: Date | string | null) {
   if (!value) return null;
@@ -13,21 +15,29 @@ function formatDate(value: Date | string | null) {
 
 export default function RecipeManager({
   recipes,
+  categories,
   directUploadEnabled,
   t,
 }: {
-  recipes: Recipe[];
+  recipes: RecipeWithCategory[];
+  categories: RecipeCategory[];
   directUploadEnabled: boolean;
   t: Dictionary["adminRecipes"];
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [replacingId, setReplacingId] = useState<string | null>(null);
+
+  // Category management
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   async function uploadRecipe(e: React.FormEvent) {
     e.preventDefault();
@@ -53,12 +63,12 @@ export default function RecipeManager({
         res = await fetch("/api/admin/recipes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, category, pdfUrl: blob.url }),
+          body: JSON.stringify({ name, categoryId, pdfUrl: blob.url }),
         });
       } else {
         const formData = new FormData();
         formData.append("name", name);
-        formData.append("category", category);
+        formData.append("categoryId", categoryId);
         formData.append("file", file);
 
         res = await fetch("/api/admin/recipes", { method: "POST", body: formData });
@@ -71,7 +81,7 @@ export default function RecipeManager({
       }
 
       setName("");
-      setCategory("");
+      setCategoryId("");
       setFile(null);
       router.refresh();
     } catch (err) {
@@ -131,8 +141,84 @@ export default function RecipeManager({
     }
   }
 
+  async function addCategory(e: React.FormEvent) {
+    e.preventDefault();
+    setCategoryError("");
+    setAddingCategory(true);
+
+    const res = await fetch("/api/admin/recipe-categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newCategoryName }),
+    });
+
+    setAddingCategory(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setCategoryError(data.error || t.failedAddCategory);
+      return;
+    }
+
+    setNewCategoryName("");
+    router.refresh();
+  }
+
+  async function deleteCategory(id: string) {
+    if (!confirm(t.confirmDeleteCategory)) return;
+    setDeletingCategoryId(id);
+    const res = await fetch(`/api/admin/recipe-categories/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      router.refresh();
+    } else {
+      setDeletingCategoryId(null);
+    }
+  }
+
   return (
     <div>
+      <div className="mt-6 max-w-lg rounded-xl border border-amber-200 bg-white p-5 shadow">
+        <h2 className="font-semibold text-amber-900">{t.manageCategories}</h2>
+        <form onSubmit={addCategory} className="mt-4 flex gap-3">
+          <input
+            type="text"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            placeholder={t.categoryPlaceholder}
+            required
+            className="flex-1 rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={addingCategory}
+            className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+          >
+            {addingCategory && <Spinner className="h-4 w-4" />}
+            {addingCategory ? t.addingCategory : t.addCategory}
+          </button>
+        </form>
+        {categoryError && <p className="mt-2 text-sm text-red-600">{categoryError}</p>}
+        {categories.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-800"
+              >
+                {c.name}
+                <button
+                  onClick={() => deleteCategory(c.id)}
+                  disabled={deletingCategoryId === c.id}
+                  className="text-red-600 hover:underline disabled:opacity-60"
+                >
+                  &times;
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="mt-6 max-w-lg rounded-xl border border-amber-200 bg-white p-5 shadow">
         <h2 className="font-semibold text-amber-900">{t.addRecipe}</h2>
         <form onSubmit={uploadRecipe} className="mt-4 flex flex-col gap-3">
@@ -151,13 +237,18 @@ export default function RecipeManager({
             <label className="block text-sm font-medium text-amber-900">
               {t.categoryLabel}
             </label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder={t.categoryPlaceholder}
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
               className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
-            />
+            >
+              <option value="">{t.noCategory}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-amber-900">{t.pdfFileLabel}</label>
@@ -197,7 +288,7 @@ export default function RecipeManager({
                 {recipe.name}
                 {recipe.category && (
                   <span className="ml-2 text-xs font-normal text-amber-500">
-                    {recipe.category}
+                    {recipe.category.name}
                   </span>
                 )}
               </a>

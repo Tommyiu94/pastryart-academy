@@ -189,6 +189,14 @@ export default function IntakeManager({
           )}
         </h1>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <a
+            href={`/api/admin/intakes/${intake.id}/preview`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
+          >
+            {t.previewAsStudent}
+          </a>
           <button
             onClick={duplicateIntake}
             disabled={duplicating}
@@ -475,7 +483,7 @@ function PastryCard({
   }
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-white p-5 shadow">
+    <div id={`pastry-${pastry.id}`} className="rounded-xl border border-amber-200 bg-white p-5 shadow">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-amber-900">{pastry.name}</h3>
         <button

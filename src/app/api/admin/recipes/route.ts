@@ -6,14 +6,14 @@ export async function POST(request: Request) {
   const contentType = request.headers.get("content-type") || "";
 
   let name: unknown;
-  let category: unknown;
+  let categoryId: unknown;
   let pdfUrl: string;
 
   if (contentType.includes("application/json")) {
     // File was already uploaded directly to Vercel Blob from the browser.
     const body = await request.json();
     name = body.name;
-    category = body.category;
+    categoryId = body.categoryId;
     const url = body.pdfUrl;
 
     if (typeof name !== "string" || typeof url !== "string") {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   } else {
     const formData = await request.formData();
     name = formData.get("name");
-    category = formData.get("category");
+    categoryId = formData.get("categoryId");
     const file = formData.get("file");
 
     if (typeof name !== "string" || !(file instanceof File)) {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const recipe = await prisma.recipe.create({
     data: {
       name,
-      category: typeof category === "string" && category.trim() ? category.trim() : null,
+      categoryId: typeof categoryId === "string" && categoryId.trim() ? categoryId.trim() : null,
       pdfUrl,
     },
   });

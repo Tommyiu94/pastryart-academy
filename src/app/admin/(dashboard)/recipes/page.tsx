@@ -10,9 +10,13 @@ export default async function AdminRecipesPage() {
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const recipes = await prisma.recipe.findMany({
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-  });
+  const [recipes, categories] = await Promise.all([
+    prisma.recipe.findMany({
+      include: { category: true },
+      orderBy: [{ category: { name: "asc" } }, { name: "asc" }],
+    }),
+    prisma.recipeCategory.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div>
@@ -20,6 +24,7 @@ export default async function AdminRecipesPage() {
       <p className="mt-1 text-amber-700">{t.adminRecipes.subtitle}</p>
       <RecipeManager
         recipes={recipes}
+        categories={categories}
         directUploadEnabled={DIRECT_UPLOAD_ENABLED}
         t={t.adminRecipes}
       />

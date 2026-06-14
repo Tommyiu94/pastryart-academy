@@ -17,6 +17,12 @@ type AdminSession = {
   type: "admin";
 };
 
+type PreviewSession = {
+  type: "preview";
+  intakeId: string;
+  intakeName: string;
+};
+
 export async function createStudentSession(intakeId: string, intakeName: string) {
   return new SignJWT({ type: "student", intakeId, intakeName } satisfies StudentSession)
     .setProtectedHeader({ alg: "HS256" })
@@ -29,6 +35,23 @@ export async function createAdminSession() {
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("30d")
     .sign(secretKey);
+}
+
+export async function createPreviewToken(intakeId: string, intakeName: string) {
+  return new SignJWT({ type: "preview", intakeId, intakeName } satisfies PreviewSession)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("5m")
+    .sign(secretKey);
+}
+
+export async function verifyPreviewToken(token: string): Promise<PreviewSession | null> {
+  try {
+    const { payload } = await jwtVerify(token, secretKey);
+    if (payload.type !== "preview") return null;
+    return payload as unknown as PreviewSession;
+  } catch {
+    return null;
+  }
 }
 
 export async function getStudentSession(): Promise<StudentSession | null> {

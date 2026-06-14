@@ -41,12 +41,19 @@ model Lesson {
   createdAt      DateTime  @default(now())
 }
 
+model RecipeCategory {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  recipes Recipe[]
+}
+
 model Recipe {
-  id             String    @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
-  category       String?
+  categoryId     String?
+  category       RecipeCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   pdfUrl         String
-  viewCount      Int       @default(0)
+  viewCount      Int             @default(0)
   lastAccessedAt DateTime?
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime        @default(now())
 }
