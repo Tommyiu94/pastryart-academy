@@ -6,6 +6,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import StudentNav from "@/components/StudentNav";
 import TrackedPdfLink from "@/components/TrackedPdfLink";
+import PdfIcon from "@/components/PdfIcon";
 
 export default async function PastryLessonsPage({
   params,
@@ -47,9 +48,12 @@ export default async function PastryLessonsPage({
                 <TrackedPdfLink
                   href={lesson.pdfUrl}
                   trackUrl={`/api/lessons/${lesson.id}/view`}
-                  className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
                 >
-                  <span className="font-medium text-amber-900">{lesson.title}</span>
+                  <span className="flex items-center gap-3">
+                    <PdfIcon />
+                    <span className="font-medium text-amber-900">{lesson.title}</span>
+                  </span>
                   <span className="text-sm text-amber-600">{t.pastryLessons.viewPdf}</span>
                 </TrackedPdfLink>
               </li>

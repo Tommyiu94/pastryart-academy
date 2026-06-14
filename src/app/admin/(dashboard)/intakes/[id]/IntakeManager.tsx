@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Intake, Pastry, Lesson } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
+import PdfIcon from "@/components/PdfIcon";
 import type { Dictionary } from "@/lib/i18n";
 
 type IntakeWithPastries = Intake & {
@@ -508,21 +509,24 @@ function PastryCard({
               draggedLessonIndex === index ? "opacity-50" : ""
             }`}
           >
-            <div className="flex flex-col">
-              <a
-                href={lesson.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-amber-800 hover:underline"
-              >
-                {lesson.title}
-              </a>
-              <span className="text-xs text-amber-500">
-                {t.viewCount.replace("{count}", String(lesson.viewCount))}
-                {lesson.lastAccessedAt
-                  ? ` · ${t.lastViewed.replace("{date}", formatDate(lesson.lastAccessedAt) ?? "")}`
-                  : ` · ${t.neverViewed}`}
-              </span>
+            <div className="flex items-center gap-3">
+              <PdfIcon className="h-7 w-7" />
+              <div className="flex flex-col">
+                <a
+                  href={lesson.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-amber-800 hover:underline"
+                >
+                  {lesson.title}
+                </a>
+                <span className="text-xs text-amber-500">
+                  {t.viewCount.replace("{count}", String(lesson.viewCount))}
+                  {lesson.lastAccessedAt
+                    ? ` · ${t.lastViewed.replace("{date}", formatDate(lesson.lastAccessedAt) ?? "")}`
+                    : ` · ${t.neverViewed}`}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-1.5 text-sm text-amber-700 hover:underline">
@@ -577,7 +581,7 @@ function PastryCard({
             multiple
             onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
             required
-            className="mt-1 text-sm"
+            className="mt-1 block w-full cursor-pointer text-sm text-amber-700 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-800"
           />
           {files.length > 1 && (
             <p className="mt-1 text-xs text-amber-600">

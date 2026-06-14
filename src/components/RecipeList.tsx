@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Recipe, RecipeCategory } from "@/generated/prisma/client";
 import type { Dictionary } from "@/lib/i18n";
 import TrackedPdfLink from "@/components/TrackedPdfLink";
+import PdfIcon from "@/components/PdfIcon";
 
 type RecipeWithCategory = Recipe & { category: RecipeCategory | null };
 
@@ -61,15 +62,18 @@ export default function RecipeList({
               <TrackedPdfLink
                 href={recipe.pdfUrl}
                 trackUrl={`/api/recipes/${recipe.id}/view`}
-                className="flex items-center justify-between rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
+                className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white p-4 shadow transition hover:border-amber-400 hover:shadow-md"
               >
-                <span className="font-medium text-amber-900">
-                  {recipe.name}
-                  {recipe.category && (
-                    <span className="ml-2 text-xs font-normal text-amber-500">
-                      {recipe.category.name}
-                    </span>
-                  )}
+                <span className="flex items-center gap-3">
+                  <PdfIcon />
+                  <span className="font-medium text-amber-900">
+                    {recipe.name}
+                    {recipe.category && (
+                      <span className="ml-2 text-xs font-normal text-amber-500">
+                        {recipe.category.name}
+                      </span>
+                    )}
+                  </span>
                 </span>
                 <span className="text-sm text-amber-600">{t.viewPdf}</span>
               </TrackedPdfLink>

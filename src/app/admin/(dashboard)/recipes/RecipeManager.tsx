@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Recipe, RecipeCategory } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
+import PdfIcon from "@/components/PdfIcon";
 import type { Dictionary } from "@/lib/i18n";
 
 type RecipeWithCategory = Recipe & { category: RecipeCategory | null };
@@ -257,7 +258,7 @@ export default function RecipeManager({
               accept="application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               required
-              className="mt-1 text-sm"
+              className="mt-1 block w-full cursor-pointer text-sm text-amber-700 file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-800"
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -278,26 +279,29 @@ export default function RecipeManager({
             key={recipe.id}
             className="flex flex-col gap-1 rounded-xl border border-amber-200 bg-white p-4 shadow sm:flex-row sm:items-center sm:justify-between"
           >
-            <div className="flex flex-col">
-              <a
-                href={recipe.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-amber-900 hover:underline"
-              >
-                {recipe.name}
-                {recipe.category && (
-                  <span className="ml-2 text-xs font-normal text-amber-500">
-                    {recipe.category.name}
-                  </span>
-                )}
-              </a>
-              <span className="text-xs text-amber-500">
-                {t.viewCount.replace("{count}", String(recipe.viewCount))}
-                {recipe.lastAccessedAt
-                  ? ` · ${t.lastViewed.replace("{date}", formatDate(recipe.lastAccessedAt) ?? "")}`
-                  : ` · ${t.neverViewed}`}
-              </span>
+            <div className="flex items-center gap-3">
+              <PdfIcon />
+              <div className="flex flex-col">
+                <a
+                  href={recipe.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-amber-900 hover:underline"
+                >
+                  {recipe.name}
+                  {recipe.category && (
+                    <span className="ml-2 text-xs font-normal text-amber-500">
+                      {recipe.category.name}
+                    </span>
+                  )}
+                </a>
+                <span className="text-xs text-amber-500">
+                  {t.viewCount.replace("{count}", String(recipe.viewCount))}
+                  {recipe.lastAccessedAt
+                    ? ` · ${t.lastViewed.replace("{date}", formatDate(recipe.lastAccessedAt) ?? "")}`
+                    : ` · ${t.neverViewed}`}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-1.5 text-sm text-amber-700 hover:underline">
