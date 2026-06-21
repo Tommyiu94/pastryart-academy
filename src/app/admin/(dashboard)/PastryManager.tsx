@@ -27,6 +27,7 @@ export default function PastryManager({
   const [error, setError] = useState("");
 
   // Shared student password
+  const [editingPassword, setEditingPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
 
@@ -68,7 +69,13 @@ export default function PastryManager({
     }
 
     setPassword("");
+    setEditingPassword(false);
     router.refresh();
+  }
+
+  function cancelPasswordEdit() {
+    setPassword("");
+    setEditingPassword(false);
   }
 
   async function addPastry(e: React.FormEvent) {
@@ -144,30 +151,53 @@ export default function PastryManager({
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <div className="mt-6 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">{t.passwordSectionTitle}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-semibold text-amber-900">{t.passwordSectionTitle}</h2>
+          {!editingPassword && (
+            <button
+              onClick={() => setEditingPassword(true)}
+              className="rounded-md border border-amber-300 px-3 py-1 text-sm font-medium text-amber-700 hover:bg-amber-50"
+            >
+              {t.editPassword}
+            </button>
+          )}
+        </div>
         <p className="mt-1 text-xs text-amber-600">{t.passwordSectionSubtitle}</p>
-        <form onSubmit={savePassword} className="mt-4 flex flex-col gap-3">
-          <div>
-            <label className="block text-sm font-medium text-amber-900">
-              {t.newPasswordLabel}
-            </label>
-            <input
-              type="text"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={savingPassword}
-            className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
-          >
-            {savingPassword && <Spinner className="h-4 w-4" />}
-            {savingPassword ? t.saving : t.save}
-          </button>
-        </form>
+        {editingPassword && (
+          <form onSubmit={savePassword} className="mt-4 flex flex-col gap-3">
+            <div>
+              <label className="block text-sm font-medium text-amber-900">
+                {t.newPasswordLabel}
+              </label>
+              <input
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoFocus
+                className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={savingPassword}
+                className="flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
+              >
+                {savingPassword && <Spinner className="h-4 w-4" />}
+                {savingPassword ? t.saving : t.save}
+              </button>
+              <button
+                type="button"
+                onClick={cancelPasswordEdit}
+                disabled={savingPassword}
+                className="rounded-md border border-amber-300 px-4 py-2 font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
+              >
+                {t.cancel}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       <div className="mt-8 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
@@ -230,7 +260,6 @@ function PastryCard({
   t: T;
 }) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -288,11 +317,8 @@ function PastryCard({
     setUploading(true);
 
     try {
-      const isBulk = files.length > 1;
-
       for (const file of files) {
-        const lessonTitle = isBulk ? fileTitle(file) : title;
-        const res = await uploadOne(file, lessonTitle);
+        const res = await uploadOne(file, fileTitle(file));
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
@@ -303,7 +329,6 @@ function PastryCard({
         }
       }
 
-      setTitle("");
       setFiles([]);
       router.refresh();
     } catch (err) {
@@ -552,18 +577,6 @@ function PastryCard({
       </ul>
 
       <form onSubmit={uploadLesson} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-amber-900">{t.lessonTitleLabel}</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t.lessonTitlePlaceholder}
-            required={files.length <= 1}
-            disabled={files.length > 1}
-            className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none disabled:bg-amber-50 disabled:text-amber-400"
-          />
-        </div>
         <div>
           <label className="block text-xs font-medium text-amber-900">{t.pdfFileLabel}</label>
           <input
