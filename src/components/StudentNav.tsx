@@ -6,11 +6,9 @@ import LanguageToggle from "@/components/LanguageToggle";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
 export default function StudentNav({
-  intakeName,
   locale,
   t,
 }: {
-  intakeName: string;
   locale: Locale;
   t: Dictionary["studentNav"];
 }) {
@@ -33,10 +31,7 @@ export default function StudentNav({
   return (
     <header className="border-b border-amber-200 bg-white">
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-        <div>
-          <p className="text-lg font-bold text-amber-900">Bakery Academy</p>
-          <p className="text-xs text-amber-600">{intakeName}</p>
-        </div>
+        <p className="text-lg font-bold text-amber-900">Bakery Academy</p>
         <nav className="flex items-center gap-2">
           <Link href="/curriculum" className={linkClass("/curriculum")}>
             {t.curriculum}

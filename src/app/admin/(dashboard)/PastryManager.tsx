@@ -2,126 +2,73 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Intake, Pastry, Lesson } from "@/generated/prisma/client";
+import type { Pastry, Lesson } from "@/generated/prisma/client";
 import Spinner from "@/components/Spinner";
 import PdfIcon from "@/components/PdfIcon";
 import type { Dictionary } from "@/lib/i18n";
 
-type IntakeWithPastries = Intake & {
-  pastries: (Pastry & { lessons: Lesson[] })[];
-};
-
-type T = Dictionary["adminIntakeDetail"];
+type T = Dictionary["adminLessons"];
 
 function formatDate(value: Date | string | null) {
   if (!value) return null;
   return new Date(value).toLocaleDateString();
 }
 
-export default function IntakeManager({
-  intake,
+export default function PastryManager({
+  pastries: initialPastries,
   directUploadEnabled,
   t,
 }: {
-  intake: IntakeWithPastries;
+  pastries: (Pastry & { lessons: Lesson[] })[];
   directUploadEnabled: boolean;
   t: T;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
 
-  // Rename / password
-  const [name, setName] = useState(intake.name);
+  // Shared student password
   const [password, setPassword] = useState("");
-  const [savingDetails, setSavingDetails] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   // New pastry
   const [newPastryName, setNewPastryName] = useState("");
   const [addingPastry, setAddingPastry] = useState(false);
 
-  const [deletingIntake, setDeletingIntake] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-  const [duplicating, setDuplicating] = useState(false);
-
   // Pastry ordering (for drag-and-drop)
-  const [pastries, setPastries] = useState(intake.pastries);
+  const [pastries, setPastries] = useState(initialPastries);
   const [draggedPastryIndex, setDraggedPastryIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setPastries(intake.pastries);
-  }, [intake.pastries]);
+    setPastries(initialPastries);
+  }, [initialPastries]);
 
-  async function saveDetails(e: React.FormEvent) {
+  async function savePassword(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setSavingDetails(true);
 
-    const body: { name?: string; password?: string } = {};
-    if (name !== intake.name) body.name = name;
-    if (password) body.password = password;
-
-    if (Object.keys(body).length === 0) {
-      setSavingDetails(false);
+    if (!password) {
+      setSavingPassword(false);
       return;
     }
 
-    const res = await fetch(`/api/admin/intakes/${intake.id}`, {
+    setSavingPassword(true);
+
+    const res = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ password }),
     });
 
-    setSavingDetails(false);
+    setSavingPassword(false);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || t.failedUpdate);
+      setError(data.error || t.failedUpdatePassword);
       return;
     }
 
     setPassword("");
     router.refresh();
-  }
-
-  async function deleteIntake() {
-    if (!confirm(t.confirmDeleteIntake.replace("{name}", intake.name))) {
-      return;
-    }
-    setDeletingIntake(true);
-    const res = await fetch(`/api/admin/intakes/${intake.id}`, { method: "DELETE" });
-    if (res.ok) {
-      router.push("/admin");
-      router.refresh();
-    } else {
-      setDeletingIntake(false);
-    }
-  }
-
-  async function toggleArchived() {
-    setArchiving(true);
-    const res = await fetch(`/api/admin/intakes/${intake.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archived: !intake.archived }),
-    });
-    setArchiving(false);
-    if (res.ok) router.refresh();
-  }
-
-  async function duplicateIntake() {
-    setDuplicating(true);
-    setError("");
-    const res = await fetch(`/api/admin/intakes/${intake.id}/duplicate`, { method: "POST" });
-    setDuplicating(false);
-
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error || t.failedDuplicate);
-      return;
-    }
-
-    const created = await res.json();
-    router.push(`/admin/intakes/${created.id}`);
   }
 
   async function addPastry(e: React.FormEvent) {
@@ -132,7 +79,7 @@ export default function IntakeManager({
     const res = await fetch("/api/admin/pastries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ intakeId: intake.id, name: newPastryName }),
+      body: JSON.stringify({ name: newPastryName }),
     });
 
     setAddingPastry(false);
@@ -183,61 +130,23 @@ export default function IntakeManager({
   return (
     <div>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
-        <h1 className="text-2xl font-bold text-amber-900">
-          {intake.name}
-          {intake.archived && (
-            <span className="ml-2 text-sm font-normal text-amber-500">{t.archivedLabel}</span>
-          )}
-        </h1>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <a
-            href={`/api/admin/intakes/${intake.id}/preview`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
-          >
-            {t.previewAsStudent}
-          </a>
-          <button
-            onClick={duplicateIntake}
-            disabled={duplicating}
-            className="flex items-center gap-2 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
-          >
-            {duplicating && <Spinner className="h-4 w-4" />}
-            {duplicating ? t.duplicating : t.duplicateIntake}
-          </button>
-          <button
-            onClick={toggleArchived}
-            disabled={archiving}
-            className="flex items-center gap-2 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-60"
-          >
-            {archiving && <Spinner className="h-4 w-4" />}
-            {intake.archived ? t.unarchiveIntake : t.archiveIntake}
-          </button>
-          <button
-            onClick={deleteIntake}
-            disabled={deletingIntake}
-            className="flex items-center gap-2 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
-          >
-            {deletingIntake && <Spinner className="h-4 w-4" />}
-            {t.deleteIntake}
-          </button>
-        </div>
+        <h1 className="text-2xl font-bold text-amber-900">{t.title}</h1>
+        <a
+          href="/api/admin/preview"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 rounded-md border border-amber-300 px-3 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
+        >
+          {t.previewAsStudent}
+        </a>
       </div>
+      <p className="mt-1 text-amber-700">{t.subtitle}</p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       <div className="mt-6 max-w-md rounded-xl border border-amber-200 bg-white p-5 shadow">
-        <h2 className="font-semibold text-amber-900">{t.settingsTitle}</h2>
-        <form onSubmit={saveDetails} className="mt-4 flex flex-col gap-3">
-          <div>
-            <label className="block text-sm font-medium text-amber-900">{t.nameLabel}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
-            />
-          </div>
+        <h2 className="font-semibold text-amber-900">{t.passwordSectionTitle}</h2>
+        <p className="mt-1 text-xs text-amber-600">{t.passwordSectionSubtitle}</p>
+        <form onSubmit={savePassword} className="mt-4 flex flex-col gap-3">
           <div>
             <label className="block text-sm font-medium text-amber-900">
               {t.newPasswordLabel}
@@ -252,11 +161,11 @@ export default function IntakeManager({
           </div>
           <button
             type="submit"
-            disabled={savingDetails}
+            disabled={savingPassword}
             className="mt-1 flex items-center justify-center gap-2 rounded-md bg-amber-700 px-4 py-2 font-medium text-white hover:bg-amber-800 disabled:opacity-60"
           >
-            {savingDetails && <Spinner className="h-4 w-4" />}
-            {savingDetails ? t.saving : t.save}
+            {savingPassword && <Spinner className="h-4 w-4" />}
+            {savingPassword ? t.saving : t.save}
           </button>
         </form>
       </div>

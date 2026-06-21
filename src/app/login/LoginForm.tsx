@@ -5,17 +5,8 @@ import { useRouter } from "next/navigation";
 import Spinner from "@/components/Spinner";
 import type { Dictionary } from "@/lib/i18n";
 
-type Intake = { id: string; name: string };
-
-export default function LoginForm({
-  intakes,
-  t,
-}: {
-  intakes: Intake[];
-  t: Dictionary["studentLogin"];
-}) {
+export default function LoginForm({ t }: { t: Dictionary["studentLogin"] }) {
   const router = useRouter();
-  const [intakeId, setIntakeId] = useState(intakes[0]?.id ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +19,7 @@ export default function LoginForm({
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ intakeId, password }),
+      body: JSON.stringify({ password }),
     });
 
     setLoading(false);
@@ -43,27 +34,8 @@ export default function LoginForm({
     router.refresh();
   }
 
-  if (intakes.length === 0) {
-    return <p className="mt-6 text-sm text-amber-700">{t.noIntakes}</p>;
-  }
-
   return (
     <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-      <div>
-        <label className="block text-sm font-medium text-amber-900">{t.intakeLabel}</label>
-        <select
-          value={intakeId}
-          onChange={(e) => setIntakeId(e.target.value)}
-          className="mt-1 w-full rounded-md border border-amber-300 px-3 py-2 focus:border-amber-500 focus:outline-none"
-        >
-          {intakes.map((intake) => (
-            <option key={intake.id} value={intake.id}>
-              {intake.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       <div>
         <label className="block text-sm font-medium text-amber-900">{t.passwordLabel}</label>
         <input

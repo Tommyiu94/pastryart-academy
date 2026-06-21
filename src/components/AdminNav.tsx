@@ -45,7 +45,7 @@ export default function AdminNav({ locale, t }: { locale: Locale; t: Dictionary[
         </form>
         <nav className="flex items-center gap-2">
           <Link href="/admin" className={linkClass("/admin")}>
-            {t.intakes}
+            {t.lessons}
           </Link>
           <Link href="/admin/recipes" className={linkClass("/admin/recipes")}>
             {t.recipes}

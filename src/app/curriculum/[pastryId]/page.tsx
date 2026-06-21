@@ -26,13 +26,13 @@ export default async function PastryLessonsPage({
     include: { lessons: { orderBy: { order: "asc" } } },
   });
 
-  if (!pastry || pastry.intakeId !== session.intakeId) {
+  if (!pastry) {
     notFound();
   }
 
   return (
     <>
-      <StudentNav intakeName={session.intakeName} locale={locale} t={t.studentNav} />
+      <StudentNav locale={locale} t={t.studentNav} />
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
         <Link href="/curriculum" className="text-sm text-amber-700 hover:underline">
           {t.pastryLessons.back}

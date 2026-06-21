@@ -10,20 +10,14 @@ datasource db {
   provider = "postgresql"
 }
 
-model Intake {
-  id           String   @id @default(cuid())
-  name         String
+model Settings {
+  id           Int    @id @default(1)
   passwordHash String
-  archived     Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  pastries     Pastry[]
 }
 
 model Pastry {
   id        String   @id @default(cuid())
   name      String
-  intakeId  String
-  intake    Intake   @relation(fields: [intakeId], references: [id], onDelete: Cascade)
   order     Int      @default(0)
   createdAt DateTime @default(now())
   lessons   Lesson[]

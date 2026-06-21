@@ -9,8 +9,6 @@ export const ADMIN_COOKIE = "academy_admin_session";
 
 type StudentSession = {
   type: "student";
-  intakeId: string;
-  intakeName: string;
 };
 
 type AdminSession = {
@@ -19,12 +17,10 @@ type AdminSession = {
 
 type PreviewSession = {
   type: "preview";
-  intakeId: string;
-  intakeName: string;
 };
 
-export async function createStudentSession(intakeId: string, intakeName: string) {
-  return new SignJWT({ type: "student", intakeId, intakeName } satisfies StudentSession)
+export async function createStudentSession() {
+  return new SignJWT({ type: "student" } satisfies StudentSession)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("180d")
     .sign(secretKey);
@@ -37,8 +33,8 @@ export async function createAdminSession() {
     .sign(secretKey);
 }
 
-export async function createPreviewToken(intakeId: string, intakeName: string) {
-  return new SignJWT({ type: "preview", intakeId, intakeName } satisfies PreviewSession)
+export async function createPreviewToken() {
+  return new SignJWT({ type: "preview" } satisfies PreviewSession)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("5m")
     .sign(secretKey);

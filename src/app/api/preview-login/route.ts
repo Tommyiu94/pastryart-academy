@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login", origin));
   }
 
-  const sessionToken = await createStudentSession(preview.intakeId, preview.intakeName);
+  const sessionToken = await createStudentSession();
   const cookieStore = await cookies();
   cookieStore.set(STUDENT_COOKIE, sessionToken, {
     httpOnly: true,

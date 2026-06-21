@@ -5,23 +5,23 @@ import { prisma } from "@/lib/prisma";
 import { createStudentSession, STUDENT_COOKIE } from "@/lib/auth";
 
 export async function POST(request: Request) {
-  const { intakeId, password } = await request.json();
+  const { password } = await request.json();
 
-  if (!intakeId || !password) {
-    return NextResponse.json({ error: "Missing intake or password" }, { status: 400 });
+  if (!password) {
+    return NextResponse.json({ error: "Missing password" }, { status: 400 });
   }
 
-  const intake = await prisma.intake.findUnique({ where: { id: intakeId } });
-  if (!intake) {
-    return NextResponse.json({ error: "Invalid intake or password" }, { status: 401 });
+  const settings = await prisma.settings.findUnique({ where: { id: 1 } });
+  if (!settings) {
+    return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const valid = await bcrypt.compare(password, intake.passwordHash);
+  const valid = await bcrypt.compare(password, settings.passwordHash);
   if (!valid) {
-    return NextResponse.json({ error: "Invalid intake or password" }, { status: 401 });
+    return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
-  const token = await createStudentSession(intake.id, intake.name);
+  const token = await createStudentSession();
   const cookieStore = await cookies();
   cookieStore.set(STUDENT_COOKIE, token, {
     httpOnly: true,
