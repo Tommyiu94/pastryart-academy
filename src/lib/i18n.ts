@@ -27,8 +27,6 @@ const en = {
     title: "Your Curriculum",
     subtitle: "Theory lessons for each pastry.",
     empty: "No pastries have been added yet. Check back soon!",
-    lesson: "lesson",
-    lessons: "lessons",
   },
   pastryLessons: {
     back: "← Back to curriculum",
@@ -161,8 +159,6 @@ const zh: typeof en = {
     title: "你的課程",
     subtitle: "每款點心的理論課程。",
     empty: "目前還沒有加入任何點心，請稍後再查看！",
-    lesson: "個課程",
-    lessons: "個課程",
   },
   pastryLessons: {
     back: "← 返回課程",

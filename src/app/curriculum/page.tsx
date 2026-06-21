@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import StudentNav from "@/components/StudentNav";
+import TrackedPdfLink from "@/components/TrackedPdfLink";
 
 export default async function CurriculumPage() {
   const session = await getStudentSession();
@@ -15,7 +16,7 @@ export default async function CurriculumPage() {
 
   const pastries = await prisma.pastry.findMany({
     orderBy: { order: "asc" },
-    include: { _count: { select: { lessons: true } } },
+    include: { lessons: { orderBy: { order: "asc" } } },
   });
 
   return (
@@ -29,20 +30,29 @@ export default async function CurriculumPage() {
           <p className="mt-8 text-amber-700">{t.curriculum.empty}</p>
         ) : (
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
-            {pastries.map((pastry) => (
-              <li key={pastry.id}>
-                <Link
-                  href={`/curriculum/${pastry.id}`}
-                  className="block rounded-xl border border-amber-200 bg-white p-5 shadow transition hover:border-amber-400 hover:shadow-md"
-                >
-                  <h2 className="text-lg font-semibold text-amber-900">{pastry.name}</h2>
-                  <p className="mt-1 text-sm text-amber-600">
-                    {pastry._count.lessons}{" "}
-                    {pastry._count.lessons === 1 ? t.curriculum.lesson : t.curriculum.lessons}
-                  </p>
-                </Link>
-              </li>
-            ))}
+            {pastries.map((pastry) => {
+              const singleLesson = pastry.lessons.length === 1 ? pastry.lessons[0] : null;
+              const cardClassName =
+                "block rounded-xl border border-amber-200 bg-white p-5 shadow transition hover:border-amber-400 hover:shadow-md";
+
+              return (
+                <li key={pastry.id}>
+                  {singleLesson ? (
+                    <TrackedPdfLink
+                      href={singleLesson.pdfUrl}
+                      trackUrl={`/api/lessons/${singleLesson.id}/view`}
+                      className={cardClassName}
+                    >
+                      <h2 className="text-lg font-semibold text-amber-900">{pastry.name}</h2>
+                    </TrackedPdfLink>
+                  ) : (
+                    <Link href={`/curriculum/${pastry.id}`} className={cardClassName}>
+                      <h2 className="text-lg font-semibold text-amber-900">{pastry.name}</h2>
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
